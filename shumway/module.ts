@@ -146,12 +146,12 @@ module Shumway {
   }
 
   export class IndentingWriter {
-    public static PURPLE = '\033[94m';
-    public static YELLOW = '\033[93m';
-    public static GREEN = '\033[92m';
-    public static RED = '\033[91m';
-    public static BOLD_RED = '\033[1;91m';
-    public static ENDC = '\033[0m';
+    public static PURPLE = '\x1b[94m';
+    public static YELLOW = '\x1b[93m';
+    public static GREEN = '\x1b[92m';
+    public static RED = '\x1b[91m';
+    public static BOLD_RED = '\x1b[1;91m';
+    public static ENDC = '\x1b[0m';
 
     public static logLevel: LogLevel = LogLevel.All;
 
