@@ -210,7 +210,7 @@ SOOT_VERSION=25Mar2015
 OLD_SOOT_VERSION := $(shell [ -f build_tools/.soot_version ] && cat build_tools/.soot_version)
 $(shell [ "$(SOOT_VERSION)" != "$(OLD_SOOT_VERSION)" ] && echo $(SOOT_VERSION) > build_tools/.soot_version)
 
-CLOSURE_COMPILER_VERSION=pluotsorbet-v20150814
+CLOSURE_COMPILER_VERSION=20150729
 OLD_CLOSURE_COMPILER_VERSION := $(shell [ -f build_tools/.closure_compiler_version ] && cat build_tools/.closure_compiler_version)
 $(shell [ "$(CLOSURE_COMPILER_VERSION)" != "$(OLD_CLOSURE_COMPILER_VERSION)" ] && echo $(CLOSURE_COMPILER_VERSION) > build_tools/.closure_compiler_version)
 
@@ -282,7 +282,9 @@ build_tools/soot-trunk.jar: build_tools/.soot_version
 
 build_tools/closure.jar: build_tools/.closure_compiler_version
 	rm -f build_tools/closure.jar
-	wget -P build_tools https://github.com/mykmelez/closure-compiler/releases/download/$(CLOSURE_COMPILER_VERSION)/closure.jar
+	wget -P build_tools https://dl.google.com/closure-compiler/compiler-$(CLOSURE_COMPILER_VERSION).tar.gz
+	tar xzf build_tools/compiler-$(CLOSURE_COMPILER_VERSION).tar.gz -C build_tools
+	mv build_tools/compiler.jar build_tools/closure.jar
 	touch build_tools/closure.jar
 
 JS=build_tools/spidermonkey/js
