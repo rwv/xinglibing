@@ -21,6 +21,12 @@ jobs:
         with:
           node-version: "0.10"
 
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "8"
+
       - name: Install APT dependencies
         run: |
           sudo apt-get update
