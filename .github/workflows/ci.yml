@@ -14,12 +14,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: true  # 等价于 --recursive
+          submodules: true # 等价于 --recursive
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '0.10'
+          node-version: "0.10"
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "2.7"
 
       - name: Install APT dependencies
         run: |
