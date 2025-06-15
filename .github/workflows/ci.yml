@@ -43,10 +43,11 @@ jobs:
           npm install casperjs
           npm install typescript@1.5.3
 
-      - name: Install Emscripten SDK
+      - name: Install Emscripten
         run: |
-          git clone --recursive https://github.com/marco-c/emscripten-sdk.git
-          cd emscripten-sdk
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install latest
           ./emsdk activate latest
           source ./emsdk_env.sh
           cd ..
@@ -61,7 +62,7 @@ jobs:
 
       - name: Run tests
         run: |
-          cd emscripten-sdk
+          cd emsdk
           source ./emsdk_env.sh
           cd ..
           make test
