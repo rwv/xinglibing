@@ -21,11 +21,6 @@ jobs:
         with:
           node-version: "0.10"
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "2.7"
-
       - name: Install APT dependencies
         run: |
           sudo apt-get update

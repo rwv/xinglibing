@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright (c) 2002-2008 ActiveState Software Inc.
 # License: MIT License (http://www.opensource.org/licenses/mit-license.php)
 
@@ -206,7 +206,7 @@ class _Logger:
             self.level = self.WARN
         else:
             self.level = level
-        if type(streamOrFileName) == types.StringType:
+        if isinstance(streamOrFileName, str):
             self.stream = open(streamOrFileName, 'w')
             self._opennedStream = 1
         else:
@@ -234,7 +234,7 @@ class _Logger:
     def isInfoEnabled(self): return self.isEnabled(self.INFO)
     def isWarnEnabled(self): return self.isEnabled(self.WARN)
     def isErrorEnabled(self): return self.isEnabled(self.ERROR)
-    def isFatalEnabled(self): return self.isEnabled(self.FATAL)
+    def isFatalEnabled(self): return self.isEnabled(self.CRITICAL)
     def log(self, level, msg, *args):
         if level < self.level:
             return
@@ -267,7 +267,7 @@ def _evaluate(expr, defines):
     #interpolated = _interpolate(s, defines)
     try:
         rv = eval(expr, {'defined':lambda v: v in defines}, defines)
-    except Exception, ex:
+    except Exception as ex:
         msg = str(ex)
         if msg.startswith("name '") and msg.endswith("' is not defined"):
             # A common error (at least this is presumed:) is to have
@@ -388,9 +388,9 @@ def preprocess(infile, outfile=sys.stdout, defines={},
     fin = open(infile, 'r')
     lines = fin.readlines()
     fin.close()
-    if type(outfile) in types.StringTypes:
+    if isinstance(outfile, str):
         if force and os.path.exists(outfile):
-            os.chmod(outfile, 0777)
+            os.chmod(outfile, 0o777)
             os.remove(outfile)
         fout = open(outfile, 'w')
     else:
@@ -710,9 +710,9 @@ class ContentTypesRegistry:
         basename = os.path.basename(path).rstrip(".in")
         contentType = None
         # Try to determine from the path.
-        if not contentType and self.filenameMap.has_key(basename):
+        if not contentType and basename in self.filenameMap:
             contentType = self.filenameMap[basename]
-            log.debug("Content type of '%s' is '%s' (determined from full "\
+            log.debug("Content type of '%s' is '%s' (determined from full "
                       "path).", path, contentType)
         # Try to determine from the suffix.
         if not contentType and '.' in basename:
@@ -720,9 +720,9 @@ class ContentTypesRegistry:
             if sys.platform.startswith("win"):
                 # Suffix patterns are case-insensitive on Windows.
                 suffix = suffix.lower()
-            if self.suffixMap.has_key(suffix):
+            if suffix in self.suffixMap:
                 contentType = self.suffixMap[suffix]
-                log.debug("Content type of '%s' is '%s' (determined from "\
+                log.debug("Content type of '%s' is '%s' (determined from "
                           "suffix '%s').", path, contentType, suffix)
         # Try to determine from the registered set of regex patterns.
         if not contentType:
@@ -733,8 +733,9 @@ class ContentTypesRegistry:
                               path, contentType, regex.pattern)
                     break
         # Try to determine from the file contents.
-        content = open(path, 'rb').read()
-        if content.startswith("<?xml"):  # cheap XML sniffing
+        with open(path, 'rb') as f:
+            content = f.read()
+        if content.startswith(b"<?xml"):
             contentType = "XML"
         return contentType
 
@@ -779,7 +780,7 @@ def main(argv):
         optlist, args = getopt.getopt(argv[1:], 'hVvo:D:fkI:sc:',
             ['help', 'version', 'verbose', 'force', 'keep-lines',
              'substitute', 'content-types-path='])
-    except getopt.GetoptError, msg:
+    except getopt.GetoptError as msg:
         sys.stderr.write("preprocess: error: %s. Your invocation was: %s\n"\
                          % (msg, argv))
         sys.stderr.write("See 'preprocess --help'.\n")
@@ -834,7 +835,7 @@ def main(argv):
         contentTypesRegistry = ContentTypesRegistry(contentTypesPaths)
         preprocess(infile, outfile, defines, force, keepLines, includePath,
                    substitute, contentTypesRegistry=contentTypesRegistry)
-    except PreprocessError, ex:
+    except PreprocessError as ex:
         if log.isDebugEnabled():
             import traceback
             traceback.print_exc(file=sys.stderr)
