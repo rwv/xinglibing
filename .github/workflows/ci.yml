@@ -60,4 +60,8 @@ jobs:
           key: ${{ runner.os }}-build-${{ hashFiles('**/package-lock.json') }}
 
       - name: Run tests
-        run: make test
+        run: |
+          cd emscripten-sdk
+          source ./emsdk_env.sh
+          cd ..
+          make test
