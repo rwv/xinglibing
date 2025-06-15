@@ -19,7 +19,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "0.10"
+          node-version: "22"
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -41,7 +41,7 @@ jobs:
       - name: Install npm dependencies
         run: |
           npm install casperjs
-          npm install typescript@1.5.3
+          npm install typescript
 
       - name: Install Emscripten
         run: |
