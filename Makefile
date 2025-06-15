@@ -23,7 +23,7 @@ CONFIG ?= config/runtests.js
 export CONFIG
 
 # Amount of memory for Emscripten-compiled code.
-ASMJS_TOTAL_MEMORY ?= 128*1024*1024
+ASMJS_TOTAL_MEMORY ?= 134217728
 export ASMJS_TOTAL_MEMORY
 
 # Initial size of the GC heap
@@ -210,11 +210,11 @@ SOOT_VERSION=25Mar2015
 OLD_SOOT_VERSION := $(shell [ -f build_tools/.soot_version ] && cat build_tools/.soot_version)
 $(shell [ "$(SOOT_VERSION)" != "$(OLD_SOOT_VERSION)" ] && echo $(SOOT_VERSION) > build_tools/.soot_version)
 
-CLOSURE_COMPILER_VERSION=pluotsorbet-v20150814
+CLOSURE_COMPILER_VERSION=20150729
 OLD_CLOSURE_COMPILER_VERSION := $(shell [ -f build_tools/.closure_compiler_version ] && cat build_tools/.closure_compiler_version)
 $(shell [ "$(CLOSURE_COMPILER_VERSION)" != "$(OLD_CLOSURE_COMPILER_VERSION)" ] && echo $(CLOSURE_COMPILER_VERSION) > build_tools/.closure_compiler_version)
 
-SPIDERMONKEY_VERSION=38.1.0esr
+SPIDERMONKEY_VERSION=139.0
 OLD_SPIDERMONKEY_VERSION := $(shell [ -f build_tools/.spidermonkey_version ] && cat build_tools/.spidermonkey_version)
 $(shell [ "$(SPIDERMONKEY_VERSION)" != "$(OLD_SPIDERMONKEY_VERSION)" ] && echo $(SPIDERMONKEY_VERSION) > build_tools/.spidermonkey_version)
 
@@ -282,14 +282,16 @@ build_tools/soot-trunk.jar: build_tools/.soot_version
 
 build_tools/closure.jar: build_tools/.closure_compiler_version
 	rm -f build_tools/closure.jar
-	wget -P build_tools https://github.com/mykmelez/closure-compiler/releases/download/$(CLOSURE_COMPILER_VERSION)/closure.jar
+	wget -P build_tools https://dl.google.com/closure-compiler/compiler-$(CLOSURE_COMPILER_VERSION).tar.gz
+	tar xzf build_tools/compiler-$(CLOSURE_COMPILER_VERSION).tar.gz -C build_tools
+	mv build_tools/compiler.jar build_tools/closure.jar
 	touch build_tools/closure.jar
 
 JS=build_tools/spidermonkey/js
 
 $(JS): build_tools/.spidermonkey_version
 	rm -rf build_tools/spidermonkey build_tools/jsshell*
-	wget -P build_tools -N https://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/$(SPIDERMONKEY_VERSION)-candidates/build1/jsshell-$(PLATFORM).zip
+	wget -P build_tools -N https://ftp.mozilla.org/pub/firefox/releases/$(SPIDERMONKEY_VERSION)/jsshell/jsshell-$(PLATFORM).zip
 	unzip -o -d build_tools/spidermonkey build_tools/jsshell-$(PLATFORM).zip
 	chmod +x build_tools/spidermonkey/*
 	touch $(JS)
@@ -338,11 +340,10 @@ bld/native.js: Makefile vm/native/native.cpp vm/native/Boehm.js/.libs/$(BOEHM_LI
 	mkdir -p bld
 	rm -f bld/native.js
 	emcc -DNDEBUG -Ivm/native/Boehm.js/include/ vm/native/Boehm.js/.libs/$(BOEHM_LIB) -Oz -O3 \
-	vm/native/native.cpp jit/relooper/Relooper.cpp -o native.raw.js --memory-init-file 0 \
-	-s TOTAL_STACK=16*1024 -s TOTAL_MEMORY=$(ASMJS_TOTAL_MEMORY) -DGC_INITIAL_HEAP_SIZE=$(GC_INITIAL_HEAP_SIZE) \
-	-s 'EXPORTED_FUNCTIONS=["_main", "_lAdd", "_lNeg", "_lSub", "_lShl", "_lShr", "_lUshr", "_lMul", "_lDiv", "_lRem", "_lCmp", "_gcMallocUncollectable", "_gcFree", "_gcMalloc", "_gcMallocAtomic", "_gcRegisterDisappearingLink", "_gcUnregisterDisappearingLink", "_registerFinalizer", "_forceCollection", "_collectALittle", "_getUsedHeapSize", "_rl_set_output_buffer","_rl_make_output_buffer","_rl_new_block","_rl_set_block_code","_rl_delete_block","_rl_block_add_branch_to","_rl_new_relooper","_rl_delete_relooper","_rl_relooper_add_block","_rl_relooper_calculate","_rl_relooper_render", "_rl_set_asm_js_mode"]' \
-	-s 'DEFAULT_LIBRARY_FUNCS_TO_INCLUDE=["memcpy", "memset", "malloc", "free", "puts"]' \
-	-s NO_EXIT_RUNTIME=1 -s NO_BROWSER=1 -s NO_FILESYSTEM=1 --post-js jit/relooper/glue.js
+	vm/native/native.cpp jit/relooper/Relooper.cpp -o native.raw.js \
+	-s TOTAL_STACK=16384 -s TOTAL_MEMORY=$(ASMJS_TOTAL_MEMORY) -DGC_INITIAL_HEAP_SIZE=$(GC_INITIAL_HEAP_SIZE) \
+	-s 'EXPORTED_FUNCTIONS=["_main", "_lAdd", "_lNeg", "_lSub", "_lShl", "_lShr", "_lUshr", "_lMul", "_lDiv", "_lRem", "_lCmp", "_gcMallocUncollectable", "_gcFree", "_gcMalloc", "_gcMallocAtomic", "_gcRegisterDisappearingLink", "_gcUnregisterDisappearingLink", "_registerFinalizer", "_forceCollection", "_collectALittle", "_getUsedHeapSize", "_rl_set_output_buffer","_rl_make_output_buffer","_rl_new_block","_rl_set_block_code","_rl_delete_block","_rl_block_add_branch_to","_rl_new_relooper","_rl_delete_relooper","_rl_relooper_add_block","_rl_relooper_calculate","_rl_relooper_render", "_rl_set_asm_js_mode", "_memcpy", "_memset", "_malloc", "_free", "_puts"]' \
+	-s NO_EXIT_RUNTIME=1 -s ENVIRONMENT="node" -s NO_FILESYSTEM=1 --post-js jit/relooper/glue.js
 	echo "var RELOOPER_BUFFER_SIZE = 1024 * 512;" > bld/native.js
 	echo "// Relooper, (C) 2012 Alon Zakai, MIT license, https://github.com/kripken/Relooper" >> bld/native.js
 	echo "var ASM = (function(Module) {" >> bld/native.js
@@ -358,7 +359,7 @@ vm/native/Boehm.js/.libs/$(BOEHM_LIB):
 
 bld/j2me.js: Makefile $(BASIC_SRCS) $(JIT_SRCS) bld/native.js build_tools/closure.jar .checksum
 	@echo "Building J2ME"
-	tsc --preserveConstEnums --sourcemap --target ES5 references.ts -d --out bld/j2me.js
+	tsc --preserveConstEnums --sourcemap --noCheck --target ES5 references.ts -d --outFile bld/j2me.js
 ifeq ($(RELEASE),1)
 	java -jar build_tools/closure.jar --formatting PRETTY_PRINT --warning_level $(CLOSURE_WARNING_LEVEL) --language_in ECMASCRIPT5 -O $(J2ME_JS_OPTIMIZATION_LEVEL) bld/j2me.js > bld/j2me.cc.js \
 		&& mv bld/j2me.cc.js bld/j2me.js
@@ -366,11 +367,11 @@ endif
 
 bld/j2me-jsc.js: $(BASIC_SRCS) $(JIT_SRCS)
 	@echo "Building J2ME AOT Compiler"
-	tsc --preserveConstEnums --sourcemap --target ES5 references-jsc.ts -d --out bld/j2me-jsc.js
+	tsc --preserveConstEnums --sourcemap --noCheck --target ES5 references-jsc.ts -d --outFile bld/j2me-jsc.js
 
 bld/jsc.js: jsc.ts bld/j2me-jsc.js
 	@echo "Building J2ME JSC CLI"
-	tsc --preserveConstEnums --sourcemap --target ES5 jsc.ts --out bld/jsc.js
+	tsc --preserveConstEnums --sourcemap --noCheck --target ES5 jsc.ts --outFile bld/jsc.js
 
 # Some scripts use ES6 features, so we have to specify ES6 as the in-language
 # in order for Closure to compile them, even though for now we're optimizing
@@ -398,7 +399,7 @@ bld/program.jar.js: program.jar bld/jsc.js $(JS) aot-methods.txt
 
 shumway: bld/shumway.js
 bld/shumway.js: $(SHUMWAY_SRCS)
-	tsc --sourcemap --target ES5 shumway/references.ts --out bld/shumway.js
+	tsc --sourcemap --noCheck --target ES5 shumway/references.ts --outFile bld/shumway.js
 
 # We should update config/build.js everytime to generate the new VERSION number
 # based on current time.

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 from xml.dom import minidom
@@ -22,9 +22,8 @@ def main(argv):
     return
 
   dom = minidom.parse(sys.argv[1])
-  f = open(sys.argv[2], 'w')
-  f.write(json.dumps(convert(dom), sort_keys=True))
-  f.close()
+  with open(sys.argv[2], 'w') as f:
+    f.write(json.dumps(convert(dom), sort_keys=True))
 
 if __name__ == "__main__":
   main(sys.argv)

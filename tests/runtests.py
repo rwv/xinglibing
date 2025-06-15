@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import select
@@ -14,8 +14,8 @@ httpsServer = ['node', 'httpsServer.js']
 sslEchoServer = ['node', 'sslEchoServer.js']
 
 if system == "Darwin":
-  httpsServer = './httpsServer.py'
-  sslEchoServer = './sslEchoServer.py'
+    httpsServer = './httpsServer.py'
+    sslEchoServer = './sslEchoServer.py'
 
 # The test automation scripts to run via casperjs/slimerjs.
 automation_scripts = [
@@ -45,24 +45,24 @@ exit_code = 0
 # [Errno 35] Resource temporarily unavailable" on large amounts of output.
 #
 server_processes = [
-    subprocess.Popen('tests/httpServer.py', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                     bufsize=1),
-    subprocess.Popen('tests/echoServer.py', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                     bufsize=1),
+    subprocess.Popen(['python3', 'tests/httpServer.py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                     bufsize=1, universal_newlines=True),
+    subprocess.Popen(['python3', 'tests/echoServer.py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                     bufsize=1, universal_newlines=True),
 
     # The SSL-based servers need to have their current working directory set
     # to the tests/ subdirectory, since they load cert/key files relative to it.
     subprocess.Popen(httpsServer, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                     bufsize=1, cwd='tests'),
+                     bufsize=1, cwd='tests', universal_newlines=True),
     subprocess.Popen(sslEchoServer, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                     bufsize=1, cwd='tests'),
+                     bufsize=1, cwd='tests', universal_newlines=True),
 ]
 
 # The output streams for the servers.
 server_output_streams = [p.stdout for p in server_processes]
 
 def wait_server(port):
-    end = time.time() + 30 # Timeout of 30 seconds
+    end = time.time() + 30  # Timeout of 30 seconds
 
     while True:
         try:
@@ -77,35 +77,34 @@ def wait_server(port):
                 time.sleep(1)
 
 def run_test(script_path):
-  global exit_code
+    global exit_code
 
-  args = ['casperjs', '--engine=slimerjs']
-  if 'VERBOSE' in os.environ and os.environ['VERBOSE'] != '0':
-    args.append('--log-level=debug')
-  args.extend(['test', script_path])
+    args = ['casperjs', '--engine=slimerjs']
+    if 'VERBOSE' in os.environ and os.environ['VERBOSE'] != '0':
+        args.append('--log-level=debug')
+    args.extend(['test', script_path])
 
-  script_process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.STDOUT,
-                                    bufsize=1)
-  output_streams = list(server_output_streams)
-  output_streams.append(script_process.stdout)
+    script_process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                    bufsize=1, universal_newlines=True)
+    output_streams = list(server_output_streams)
+    output_streams.append(script_process.stdout)
 
-  while True:
-      readable_streams, _, _ = select.select(output_streams, [], [])
+    while True:
+        readable_streams, _, _ = select.select(output_streams, [], [])
 
-      for stream in readable_streams:
-          line = stream.readline()
+        for stream in readable_streams:
+            line = stream.readline()
 
-          if stream is script_process.stdout and "FAIL" in line:
-            exit_code = 1
+            if stream is script_process.stdout and "FAIL" in line:
+                exit_code = 1
 
-          sys.stdout.write(line)
+            sys.stdout.write(line)
 
-      if script_process.poll() is not None:
-          # Print any famous last words the process wrote to its output stream
-          # between the last time we polled it and its termination.
-          sys.stdout.write(script_process.stdout.read())
-
-          break
+        if script_process.poll() is not None:
+            # Print any famous last words the process wrote to its output stream
+            # between the last time we polled it and its termination.
+            sys.stdout.write(script_process.stdout.read())
+            break
 
 # Wait for the servers to become ready for connections.
 wait_server(8000)
@@ -126,9 +125,10 @@ for process in server_processes:
 for stream in server_output_streams:
     sys.stdout.write(stream.read())
 
-p = subprocess.Popen(['js', 'shell/pluot.js', '-cp', 'tests/tests.jar', 'Basic'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+p = subprocess.Popen(['js', 'shell/pluot.js', '-cp', 'tests/tests.jar', 'Basic'], 
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 shell_success = False
-for line in iter(p.stdout.readline, b''):
+for line in p.stdout:
     if "The end" in line:
         shell_success = True
     sys.stdout.write(line)
@@ -137,9 +137,10 @@ if not shell_success:
     sys.stdout.write("FAIL - Basic shell test failed\n")
     exit_code = 1
 
-p = subprocess.Popen(['js', os.path.join('tests','gctests.js')], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+p = subprocess.Popen(['js', os.path.join('tests', 'gctests.js')], 
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 gc_tests_success = True
-for line in iter(p.stdout.readline, b''):
+for line in p.stdout:
     if "fail" in line:
         gc_tests_success = False
     sys.stdout.write(line)

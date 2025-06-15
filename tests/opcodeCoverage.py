@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import os
@@ -36,24 +36,23 @@ def decompile(jar, path):
     for name in files:
       if name.endswith(".class"):
         print("Decompiling " + name + "...")
-        filePath = root + "/" + name[:-6]
+        filePath = os.path.join(root, name[:-6])
         os.system("javap -verbose -l -c -s -private " + filePath + " > " + filePath+".jbc")
 
   for root, dirs, files in os.walk(path):
     for name in files:
       if not name.endswith(".jbc"):
-        os.remove(root + "/" + name)
+        os.remove(os.path.join(root, name))
 
 def readAll(path):
   for root, dirs, files in os.walk(path):
     for name in files:
       if name.endswith(".jbc") and len(name) > 4:
-        cache[name[:-4]] = open(root + "/" + name).read()
+        with open(os.path.join(root, name), 'r') as f:
+          cache[name[:-4]] = f.read()
 
 def countOpcodeUsage():
-  opcodes = {}
-  for opcode in table:
-    opcodes[opcode] = 0
+  opcodes = {opcode: 0 for opcode in table}
 
   for opcode in table:
     for elem in cache:
