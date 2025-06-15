@@ -359,7 +359,7 @@ vm/native/Boehm.js/.libs/$(BOEHM_LIB):
 
 bld/j2me.js: Makefile $(BASIC_SRCS) $(JIT_SRCS) bld/native.js build_tools/closure.jar .checksum
 	@echo "Building J2ME"
-	tsc --preserveConstEnums --sourcemap --target ES5 references.ts -d --out bld/j2me.js
+	tsc --preserveConstEnums --sourcemap --target ES5 references.ts -d --outFile bld/j2me.js
 ifeq ($(RELEASE),1)
 	java -jar build_tools/closure.jar --formatting PRETTY_PRINT --warning_level $(CLOSURE_WARNING_LEVEL) --language_in ECMASCRIPT5 -O $(J2ME_JS_OPTIMIZATION_LEVEL) bld/j2me.js > bld/j2me.cc.js \
 		&& mv bld/j2me.cc.js bld/j2me.js
@@ -367,11 +367,11 @@ endif
 
 bld/j2me-jsc.js: $(BASIC_SRCS) $(JIT_SRCS)
 	@echo "Building J2ME AOT Compiler"
-	tsc --preserveConstEnums --sourcemap --target ES5 references-jsc.ts -d --out bld/j2me-jsc.js
+	tsc --preserveConstEnums --sourcemap --target ES5 references-jsc.ts -d --outFile bld/j2me-jsc.js
 
 bld/jsc.js: jsc.ts bld/j2me-jsc.js
 	@echo "Building J2ME JSC CLI"
-	tsc --preserveConstEnums --sourcemap --target ES5 jsc.ts --out bld/jsc.js
+	tsc --preserveConstEnums --sourcemap --target ES5 jsc.ts --outFile bld/jsc.js
 
 # Some scripts use ES6 features, so we have to specify ES6 as the in-language
 # in order for Closure to compile them, even though for now we're optimizing
@@ -399,7 +399,7 @@ bld/program.jar.js: program.jar bld/jsc.js $(JS) aot-methods.txt
 
 shumway: bld/shumway.js
 bld/shumway.js: $(SHUMWAY_SRCS)
-	tsc --sourcemap --target ES5 shumway/references.ts --out bld/shumway.js
+	tsc --sourcemap --target ES5 shumway/references.ts --outFile bld/shumway.js
 
 # We should update config/build.js everytime to generate the new VERSION number
 # based on current time.
