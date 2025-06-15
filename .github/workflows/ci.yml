@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    env:
+      DISPLAY: ":99.0"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true  # 等价于 --recursive
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '0.10'
+
+      - name: Install APT dependencies
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt-get update
+          sudo apt-get install -y g++-4.9
+
+      - name: Start xvfb
+        run: |
+          sudo apt-get install -y xvfb
+          Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+          sleep 3
+
+      - name: Install npm dependencies
+        run: |
+          npm install casperjs
+          npm install typescript@1.5.3
+
+      - name: Install Emscripten SDK
+        run: |
+          git clone --recursive https://github.com/marco-c/emscripten-sdk.git
+          cd emscripten-sdk
+          ./emsdk activate latest
+          source ./emsdk_env.sh
+          cd ..
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            build_tools
+          key: ${{ runner.os }}-build-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Run tests
+        run: make test
